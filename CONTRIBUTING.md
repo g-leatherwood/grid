@@ -16,7 +16,7 @@ go run . some.csv
 | `main.go` | Command-line flags, starting the server, opening the browser, Ctrl+C handling |
 | `server.go` | The local HTTP API the page talks to, the per-run token and host checks, and the event stream that tells the page when grid quits |
 | `doc.go` | Loading and saving CSV and xlsx files, and applying edits (set, insert, delete, sort) to them |
-| `logo.go` | The logo printed in the terminal at startup |
+| `logo.go` | The logo printed in the terminal at startup. The README shows the same logo, and a test keeps the two identical |
 | `web/` | The page: plain HTML, CSS and JavaScript with no build step |
 
 The page keeps its own copy of the sheet, applies each edit right away, and sends it to the server as an op. The server applies the same op to the file in memory, sends back anything that changed as a side effect (such as recalculated formulas), and writes the file only when you save.
@@ -31,11 +31,16 @@ The page keeps its own copy of the sheet, applies each edit right away, and send
 
 ## Releasing
 
-Maintainers publish a release by pushing a version tag. GitHub Actions then builds the downloads for every platform with [GoReleaser](https://goreleaser.com) and attaches them to a GitHub release:
+Maintainers publish a release by pushing a version tag. GitHub Actions then builds the downloads for every platform with [GoReleaser](https://goreleaser.com) and attaches them to a GitHub release.
 
-```sh
-git tag -a vX.Y.Z -m "vX.Y.Z"
-git push origin vX.Y.Z
-```
+1. Change the version in the bottom line of the logo in `README.md` to the new one. `go test ./...` checks the rest of the logo still matches what grid prints, and prints the correct logo if it doesn't.
+2. Commit, then tag and push:
+
+   ```sh
+   git tag -a vX.Y.Z -m "vX.Y.Z"
+   git push origin vX.Y.Z
+   ```
+
+The release stops before building anything if the README logo doesn't show the version being released.
 
 The archive names don't include the version, so the README's `releases/latest/download/...` links always point to the newest release.

@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"regexp"
 	"strings"
 	"testing"
 	"time"
@@ -353,5 +354,29 @@ func TestLogoMatchesMockup(t *testing.T) {
 	got := logoLines("v0.1.4")
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("logo changed:\n%s\nwant:\n%s", strings.Join(got, "\n"), strings.Join(want, "\n"))
+	}
+}
+
+// The README shows the logo grid prints, so they can't drift apart. The README
+// carries the latest release's version in the logo's bottom line; the release
+// workflow checks that it matches the tag being released.
+func TestReadmeLogoMatchesBanner(t *testing.T) {
+	readme, err := os.ReadFile("README.md")
+	if err != nil {
+		t.Fatal(err)
+	}
+	s := string(readme)
+	start := strings.Index(s, "<pre>\n")
+	end := strings.Index(s, "</pre>")
+	if start < 0 || end < start {
+		t.Fatal("README has no <pre> logo block")
+	}
+	got := strings.Split(strings.TrimRight(s[start+len("<pre>\n"):end], "\n"), "\n")
+	version := regexp.MustCompile(`v\d+\.\d+\.\d+`).FindString(got[len(got)-1])
+	if version == "" {
+		t.Fatalf("README logo's bottom line should show a version like v1.2.3, got %q", got[len(got)-1])
+	}
+	if want := logoLines(version); !reflect.DeepEqual(got, want) {
+		t.Errorf("README logo doesn't match the banner. Put this in README.md:\n%s", strings.Join(want, "\n"))
 	}
 }
