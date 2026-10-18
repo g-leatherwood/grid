@@ -1,4 +1,5 @@
-```text
+<div align="center">
+<pre>
                               ┌──┐           ┌──┐
                               │  │           │  │
                               └──┘           ├──┤
@@ -12,11 +13,12 @@
 └──┼──┬──┼──┤  ├──┤           ├──┤  └──┼──┬──┼──┤
    │  │  │  │  │  │           │  │     │  │  │  │
    └──┴──┼──┤  └──┘           └──┘     └──┴──┴──┘
-         │  │
-┌──┬──┬──┼──┘
-│  │  │  │
-└──┴──┴──┘
-```
+         │  │                                    
+┌──┬──┬──┼──┘                                    
+│  │  │  │                                       
+└──┴──┴──┘                                       
+</pre>
+</div>
 
 Pop open a CSV or Excel file, check it, fix it, save it, close it. No spreadsheet app needed.
 
