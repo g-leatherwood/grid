@@ -1,4 +1,22 @@
-# grid
+```text
+                              ┌──┐           ┌──┐
+                              │  │           │  │
+                              └──┘           ├──┤
+                                             │  │
+   ┌──┬──┬──┐  ┌──┐  ┌──┬──┐  ┌──┐     ┌──┬──┼──┤
+   │  │  │  │  │  │  │  │  │  │  │     │  │  │  │
+┌──┼──┴──┼──┤  ├──┼──┼──┴──┘  ├──┤  ┌──┼──┴──┼──┤
+│  │     │  │  │  │  │        │  │  │  │     │  │
+├──┤     ├──┤  ├──┼──┘        ├──┤  ├──┤     ├──┤
+│  │     │  │  │  │           │  │  │  │     │  │
+└──┼──┬──┼──┤  ├──┤           ├──┤  └──┼──┬──┼──┤
+   │  │  │  │  │  │           │  │     │  │  │  │
+   └──┴──┼──┤  └──┘           └──┘     └──┴──┴──┘
+         │  │
+┌──┬──┬──┼──┘
+│  │  │  │
+└──┴──┴──┘
+```
 
 Pop open a CSV or Excel file, check it, fix it, save it, close it. No spreadsheet app needed.
 
@@ -145,20 +163,15 @@ Filters on several columns combine. Filtered columns and their row numbers turn 
 - Sorting covers every row below the header. You can't sort a selected range on its own.
 - Old `.xls` files aren't supported. Save them as `.xlsx` first.
 
-## Development
+## Build from source
+
+With Go 1.25 or later, clone this repository, then from its folder run:
 
 ```sh
-go test ./...
-go run . some.csv
+go build .
 ```
 
-The Go side (`main.go`, `server.go`, `doc.go`) reads and writes files and applies edits. The page is plain HTML, CSS and JavaScript in `web/`, embedded in the binary at build time, so rebuild or rerun `go run` after changing it.
-
-To publish a release, push a version tag. GitHub Actions builds the downloads for every platform with [GoReleaser](https://goreleaser.com):
-
-```sh
-git tag v0.1.0 && git push origin v0.1.0
-```
+To work on grid, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
