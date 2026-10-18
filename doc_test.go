@@ -329,9 +329,29 @@ func TestBanner(t *testing.T) {
 	if strings.Contains(out, "\x1b[") {
 		t.Fatal("banner should print in the terminal's normal text color")
 	}
-	for _, want := range []string{"┌──┐", "orders.csv", "http://127.0.0.1:1/#tok", "Ctrl+C to quit"} {
+	for _, want := range []string{word[1], "+-----+", "orders.csv", "http://127.0.0.1:1/#tok", "Ctrl+C to quit"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("banner is missing %q", want)
 		}
+	}
+}
+
+func TestLogoMatchesMockup(t *testing.T) {
+	want := []string{
+		"+-----+-----+-----+-----+-----+-----+-----+-----+-----+",
+		"|     |     |     |     |     |     |     |     |     |",
+		"+-----+-----+-----+-----+----  _     __  -+-----+-----+",
+		"|     |     |      ____ ______(_)___/ /   |     |     |",
+		"+-----+-----+---  / __ `/ ___/ / __  /  --+-----+-----+",
+		"|     |     |    / /_/ / /  / / /_/ /     |     |     |",
+		"+-----+-----+--  \\__, /_/  /_/\\__,_/  ----+-----+-----+",
+		"|     |     |   /____/  |     |     |     |     |     |",
+		"+-----+-----+-----+-----+-----+-----+-----+-----+-----+",
+		"|     |     |     |  a quick peek   |     |     |     |",
+		"+-----+-----+-----+---- v0.1.4 -----+-----+-----+-----+",
+	}
+	got := logoLines("v0.1.4")
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("logo changed:\n%s\nwant:\n%s", strings.Join(got, "\n"), strings.Join(want, "\n"))
 	}
 }
