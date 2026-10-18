@@ -167,9 +167,11 @@ Filters on several columns combine. Filtered columns and their row numbers turn 
 
 ## Build from source
 
-With Go 1.25 or later, clone this repository, then from its folder run:
+With Go 1.25 or later:
 
 ```sh
+git clone https://github.com/g-leatherwood/grid
+cd grid
 go build .
 ```
 
