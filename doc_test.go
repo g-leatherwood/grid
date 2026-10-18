@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"os"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -317,5 +319,19 @@ func TestReorderXLSXMovesFormulasStylesAndTypes(t *testing.T) {
 	}
 	if v, _ := g.CalcCellValue("Sheet1", "C4"); v != "6" {
 		t.Fatalf("C4 = %q after reopen", v)
+	}
+}
+
+func TestBannerHasNoColorWhenNotATerminal(t *testing.T) {
+	var buf bytes.Buffer
+	printBanner(&buf, "orders.csv", "http://127.0.0.1:1/#tok")
+	out := buf.String()
+	if strings.Contains(out, "\x1b[") {
+		t.Fatal("banner should have no color codes outside a terminal")
+	}
+	for _, want := range []string{"┌──┐", "orders.csv", "http://127.0.0.1:1/#tok", "Ctrl+C to quit"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("banner is missing %q", want)
+		}
 	}
 }

@@ -63,7 +63,7 @@ func run(path string, port int, open bool) error {
 			os.Exit(1)
 		}
 	}()
-	fmt.Printf("grid: %s at %s\n      Ctrl+C to quit\n", path, url)
+	printBanner(os.Stdout, path, url)
 	if open {
 		openBrowser(url)
 	}
