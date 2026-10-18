@@ -322,12 +322,12 @@ func TestReorderXLSXMovesFormulasStylesAndTypes(t *testing.T) {
 	}
 }
 
-func TestBannerHasNoColorWhenNotATerminal(t *testing.T) {
+func TestBanner(t *testing.T) {
 	var buf bytes.Buffer
 	printBanner(&buf, "orders.csv", "http://127.0.0.1:1/#tok")
 	out := buf.String()
 	if strings.Contains(out, "\x1b[") {
-		t.Fatal("banner should have no color codes outside a terminal")
+		t.Fatal("banner should print in the terminal's normal text color")
 	}
 	for _, want := range []string{"┌──┐", "orders.csv", "http://127.0.0.1:1/#tok", "Ctrl+C to quit"} {
 		if !strings.Contains(out, want) {
