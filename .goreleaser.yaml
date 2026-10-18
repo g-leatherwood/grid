@@ -1,0 +1,29 @@
+# Builds the release downloads. Runs from .github/workflows/release.yml when
+# a version tag (v1.2.3) is pushed.
+version: 2
+
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goos: [darwin, linux, windows]
+    goarch: [amd64, arm64]
+    ldflags:
+      - -s -w -X main.version={{.Version}}
+
+archives:
+  # No version in the file name, so the README can link to
+  # releases/latest/download/<name> and the link never goes stale.
+  - name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
+    formats: [tar.gz]
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+    files:
+      - README.md
+      - LICENSE
+
+checksum:
+  name_template: checksums.txt
+
+changelog:
+  use: github

@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>grid</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header id="bar">
+  <div id="title"><span id="fname"></span></div>
+  <input id="addr" spellcheck="false" aria-label="Cell address">
+  <span id="fxlabel">fx</span>
+  <input id="fx" spellcheck="false" aria-label="Cell contents">
+  <button id="savebtn" type="button"><span id="savelabel">Saved</span><kbd id="savekbd"></kbd></button>
+</header>
+<main id="grid">
+  <div id="corner"></div>
+  <div id="colhead"><div id="colhead-inner"></div></div>
+  <div id="rowhead"><div id="rowhead-inner"></div></div>
+  <div id="viewport" tabindex="0">
+    <div id="sizer"></div>
+    <div id="cells"></div>
+    <div id="selbox"></div>
+    <div id="active"></div>
+    <div id="clipbox"></div>
+    <textarea id="editor" spellcheck="false" hidden></textarea>
+  </div>
+</main>
+<footer id="foot">
+  <div id="tabs"></div>
+  <div id="filterinfo" hidden></div>
+  <div id="stats"></div>
+</footer>
+<div id="find" hidden>
+  <input id="findq" placeholder="Find in sheet" spellcheck="false">
+  <span id="findn"></span>
+</div>
+<div id="colmenu" hidden></div>
+<div id="menu" hidden></div>
+<div id="toast" hidden></div>
+<div id="closed" hidden><div><b>grid has quit.</b><p id="closedmsg"></p></div></div>
+<script src="app.js"></script>
+</body>
+</html>
