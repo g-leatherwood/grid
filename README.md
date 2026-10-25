@@ -7,7 +7,7 @@
 ╚██████╔╝██║  ██║██║██████╔╝
  ╚═════╝ ╚═╝  ╚═╝╚═╝╚═════╝
 
-a quick peek · v0.1.4 / open a CSV or Excel file in your browser
+a quick peek · v0.2.0 / open a CSV or Excel file in your browser
 ────────────────────────────────────────────────────────────────
 </pre>
 </div>
