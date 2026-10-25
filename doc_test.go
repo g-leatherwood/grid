@@ -2,6 +2,9 @@ package main
 
 import (
 	"bytes"
+	"flag"
+	"fmt"
+	"html"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -393,27 +396,105 @@ func TestLogoMatchesMockup(t *testing.T) {
 	}
 }
 
-// The README shows the logo grid prints, so they can't drift apart. The README
-// carries the latest release's version in the logo's subtitle line; the release
-// workflow checks that it matches the tag being released.
+var update = flag.Bool("update", false, "redraw docs/logo.svg from the banner")
+
+// The README shows the logo grid prints, so they can't drift apart. It's a
+// drawing, docs/logo.svg, because browsers' fonts draw the logo's box-drawing
+// letters misaligned. The image's alt text carries the subtitle line with the
+// latest release's version; the release workflow checks that it matches the
+// tag being released.
 func TestReadmeLogoMatchesBanner(t *testing.T) {
 	readme, err := os.ReadFile("README.md")
 	if err != nil {
 		t.Fatal(err)
 	}
-	s := string(readme)
-	start := strings.Index(s, "<pre>\n")
-	end := strings.Index(s, "</pre>")
-	if start < 0 || end < start {
-		t.Fatal("README has no <pre> logo block")
+	m := regexp.MustCompile(`<img src="docs/logo.svg" alt="GRID — ([^"]*)"`).FindStringSubmatch(string(readme))
+	if m == nil {
+		t.Fatal(`README has no <img src="docs/logo.svg" alt="GRID — …"> logo`)
 	}
-	got := strings.Split(strings.TrimRight(s[start+len("<pre>\n"):end], "\n"), "\n")
-	sub := got[len(got)-2]
-	version := regexp.MustCompile(`v\d+\.\d+\.\d+`).FindString(sub)
+	version := regexp.MustCompile(`v\d+\.\d+\.\d+`).FindString(m[1])
 	if version == "" {
-		t.Fatalf("README logo's subtitle line should show a version like v1.2.3, got %q", sub)
+		t.Fatalf("README logo's alt text should show a version like v1.2.3, got %q", m[1])
 	}
-	if want := logoLines(version); !reflect.DeepEqual(got, want) {
-		t.Errorf("README logo doesn't match the banner. Put this in README.md:\n%s", strings.Join(want, "\n"))
+	lines := logoLines(version)
+	if sub := lines[len(word)+1]; m[1] != sub {
+		t.Errorf("README logo's alt text should be %q", "GRID — "+sub)
 	}
+	want := logoSVG(lines)
+	if *update {
+		if err := os.WriteFile("docs/logo.svg", []byte(want), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		return
+	}
+	got, err := os.ReadFile("docs/logo.svg")
+	if err != nil || string(got) != want {
+		t.Error("docs/logo.svg doesn't match the banner. Redraw it with: go test -run TestReadmeLogo -update")
+	}
+}
+
+// logoSVG draws the banner the way a terminal shows it, one cell per
+// character on a dark panel: the word's full blocks filled and its double
+// box-drawing lines stroked in olive drab, then the subtitle and rule in grey.
+// textLength pins the subtitle to its cells, so any monospace font fits.
+func logoSVG(lines []string) string {
+	const cw, ch, pad, g = 9.0, 18.0, 24.0, 2.5 // cell size, padding, gap between double lines
+	cols := 0
+	for _, line := range lines {
+		cols = max(cols, len([]rune(line)))
+	}
+	w, h := float64(cols)*cw+2*pad, float64(len(lines))*ch+2*pad
+	var b strings.Builder
+	fmt.Fprintf(&b, "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"%g\" height=\"%g\" viewBox=\"0 0 %g %g\">\n", w, h, w, h)
+	fmt.Fprintf(&b, "<rect width=\"%g\" height=\"%g\" rx=\"10\" fill=\"#2d3136\"/>\n", w, h)
+	var blocks, strokes strings.Builder
+	for r, line := range lines[:len(word)] {
+		runes := []rune(line)
+		y0 := pad + float64(r)*ch
+		my := y0 + ch/2
+		for c := 0; c < len(runes); c++ {
+			x0 := pad + float64(c)*cw
+			mx, x1, y1 := x0+cw/2, x0+cw, y0+ch
+			switch runes[c] {
+			case ' ':
+			case '█': // one rect per run of blocks, so no seams show between them
+				n := 1
+				for c+n < len(runes) && runes[c+n] == '█' {
+					n++
+				}
+				fmt.Fprintf(&blocks, "<rect x=\"%g\" y=\"%g\" width=\"%g\" height=\"%g\"/>\n", x0, y0, float64(n)*cw, ch)
+				c += n - 1
+			case '═':
+				fmt.Fprintf(&strokes, "M%g %gH%gM%g %gH%g", x0, my-g, x1, x0, my+g, x1)
+			case '║':
+				fmt.Fprintf(&strokes, "M%g %gV%gM%g %gV%g", mx-g, y0, y1, mx+g, y0, y1)
+			case '╔':
+				fmt.Fprintf(&strokes, "M%g %gH%gV%gM%g %gH%gV%g", x1, my-g, mx-g, y1, x1, my+g, mx+g, y1)
+			case '╗':
+				fmt.Fprintf(&strokes, "M%g %gH%gV%gM%g %gH%gV%g", x0, my-g, mx+g, y1, x0, my+g, mx-g, y1)
+			case '╚':
+				fmt.Fprintf(&strokes, "M%g %gV%gH%gM%g %gV%gH%g", mx-g, y0, my+g, x1, mx+g, y0, my-g, x1)
+			case '╝':
+				fmt.Fprintf(&strokes, "M%g %gV%gH%gM%g %gV%gH%g", mx+g, y0, my+g, x0, mx-g, y0, my-g, x0)
+			default:
+				panic("logoSVG can't draw " + string(runes[c]))
+			}
+		}
+	}
+	fmt.Fprintf(&b, "<g fill=\"#5f8700\">\n%s</g>\n", blocks.String())
+	fmt.Fprintf(&b, "<path fill=\"none\" stroke=\"#5f8700\" stroke-width=\"1.5\" d=\"%s\"/>\n", strokes.String())
+	for i, line := range lines[len(word):] {
+		n := float64(len([]rune(line)))
+		y0 := pad + float64(len(word)+i)*ch
+		switch {
+		case line == "":
+		case strings.Trim(line, "─") == "":
+			fmt.Fprintf(&b, "<path stroke=\"#8b8f94\" d=\"M%g %gH%g\"/>\n", pad, y0+ch/2, pad+n*cw)
+		default:
+			fmt.Fprintf(&b, "<text x=\"%g\" y=\"%g\" fill=\"#8b8f94\" font-family=\"ui-monospace, SFMono-Regular, Menlo, Consolas, monospace\" font-size=\"15\" textLength=\"%g\" lengthAdjust=\"spacingAndGlyphs\" xml:space=\"preserve\">%s</text>\n",
+				pad, y0+13.5, n*cw, html.EscapeString(line))
+		}
+	}
+	b.WriteString("</svg>\n")
+	return b.String()
 }

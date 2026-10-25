@@ -16,7 +16,7 @@ go run . some.csv
 | `main.go` | Command-line flags, starting the server, opening the browser, Ctrl+C handling |
 | `server.go` | The local HTTP API the page talks to, the per-run token and host checks, and the event stream that tells the page when grid quits |
 | `doc.go` | Loading and saving CSV and xlsx files, and applying edits (set, insert, delete, sort) to them |
-| `logo.go` | The logo printed in the terminal at startup. The README shows the same logo, and a test keeps the two identical |
+| `logo.go` | The logo printed in the terminal at startup. The README shows a drawing of it, `docs/logo.svg`, which the tests draw from the same lines and keep identical |
 | `web/` | The page: plain HTML, CSS and JavaScript with no build step |
 
 The page keeps its own copy of the sheet, applies each edit right away, and sends it to the server as an op. The server applies the same op to the file in memory, sends back anything that changed as a side effect (such as recalculated formulas), and writes the file only when you save.
@@ -33,7 +33,7 @@ The page keeps its own copy of the sheet, applies each edit right away, and send
 
 Maintainers publish a release by pushing a version tag. GitHub Actions then builds the downloads for every platform with [GoReleaser](https://goreleaser.com) and attaches them to a GitHub release.
 
-1. Change the version in the logo's subtitle line in `README.md` (`a quick peek · vX.Y.Z / …`) to the new one. `go test ./...` checks the rest of the logo still matches what grid prints, and prints the correct logo if it doesn't.
+1. Change the version in the logo's alt text in `README.md` (`GRID — a quick peek · vX.Y.Z / …`) to the new one, then redraw the logo with `go test -run TestReadmeLogo -update`. `go test ./...` checks that the alt text and `docs/logo.svg` match what grid prints.
 2. Commit, then tag and push:
 
    ```sh

@@ -21,7 +21,7 @@ jobs:
       - name: Check the README logo shows this version
         run: |
           grep -q -- " ${GITHUB_REF_NAME} /" README.md || {
-            echo "::error::The logo in README.md should show ${GITHUB_REF_NAME} in its subtitle line. Update it, commit, and tag again."
+            echo "::error::The logo in README.md should show ${GITHUB_REF_NAME} in its alt text. Update it, run go test -run TestReadmeLogo -update, commit, and tag again."
             exit 1
           }
       - uses: goreleaser/goreleaser-action@v6

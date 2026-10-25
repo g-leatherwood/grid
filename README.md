@@ -1,15 +1,5 @@
 <div align="center">
-<pre>
- ██████╗ ██████╗ ██╗██████╗
-██╔════╝ ██╔══██╗██║██╔══██╗
-██║  ███╗██████╔╝██║██║  ██║
-██║   ██║██╔══██╗██║██║  ██║
-╚██████╔╝██║  ██║██║██████╔╝
- ╚═════╝ ╚═╝  ╚═╝╚═╝╚═════╝
-
-a quick peek · v0.2.0 / open a CSV or Excel file in your browser
-────────────────────────────────────────────────────────────────
-</pre>
+<img src="docs/logo.svg" alt="GRID — a quick peek · v0.2.0 / open a CSV or Excel file in your browser">
 </div>
 
 Pop open a CSV or Excel file, check it, fix it, save it, close it. No spreadsheet app needed.
