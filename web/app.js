@@ -493,7 +493,7 @@ function showSelection() {
     fx.value = vedit(sel.ar, sel.ac);
     const lastR = r1 >= MAX_ROWS - 1 ? MAX_ROWS - 1 : dr(r1);
     addr.value = multi ? cellName(dr(r0), c0) + ':' + cellName(lastR, c1) : cellName(dr(sel.ar), sel.ac);
-    addr.style.width = Math.max(84, addr.value.length * 8 + 20) + 'px';
+    fitAddr();
   }
   scheduleStats();
 }
@@ -624,13 +624,45 @@ fx.addEventListener('keydown', (e) => {
   }
 });
 
+addr.title = `Go to a cell, row, column or header (${MOD}G)`;
+addr.addEventListener('input', fitAddr);
 addr.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') { showSelection(); vp.focus(); return; }
   if (e.key !== 'Enter') return;
   e.preventDefault();
-  const m = addr.value.trim().toUpperCase().match(/^\$?([A-Z]{1,3})\$?(\d+)(?::\$?([A-Z]{1,3})\$?(\d+))?$/);
   vp.focus();
-  if (!m) { showSelection(); return; }
+  goTo(addr.value.trim());
+});
+
+function fitAddr() {
+  addr.style.width = Math.max(84, addr.value.length * 8 + 20) + 'px';
+}
+
+function openGoTo() {
+  if (ed) commitEdit();
+  closeColMenu();
+  addr.focus();
+  addr.select();
+}
+
+// goTo jumps to what was typed in the address box: a cell (B12), a range
+// (A1:D20), a row (12), a column (AA) or a column by its header (email).
+function goTo(q) {
+  if (!q) { showSelection(); return; }
+  if (/^\d+$/.test(q)) {
+    if (+q < 1 || +q > MAX_ROWS) { showSelection(); return; }
+    const r = vrOf(+q - 1);
+    if (r < 0) { toast(`Row ${q} is hidden by a filter`); showSelection(); return; }
+    select(r, sel.ac);
+    return;
+  }
+  const m = q.toUpperCase().match(/^\$?([A-Z]{1,3})\$?(\d+)(?::\$?([A-Z]{1,3})\$?(\d+))?$/);
+  if (!m) {
+    const c = findColumn(q);
+    if (c < 0) { toast(`No column named "${q}"`); showSelection(); return; }
+    select(sel.ar, c);
+    return;
+  }
   const r = vrOf(+m[2] - 1), c = colNum(m[1]);
   if (r < 0) { toast(`Row ${m[2]} is hidden by a filter`); showSelection(); return; }
   if (m[3]) {
@@ -639,7 +671,24 @@ addr.addEventListener('keydown', (e) => {
   } else {
     select(r, c);
   }
-});
+}
+
+// findColumn resolves a column name or header, or returns -1. A header that
+// matches exactly wins, then column letters inside the data (so "AB" means
+// column AB, not "Abbreviation"), then the first header containing the text,
+// then column letters past the data.
+function findColumn(q) {
+  const name = q.toLowerCase(), n = maxCols();
+  const heads = [];
+  if (ss.header) for (let c = 0; c < n; c++) heads.push(String(val(sheet, 0, c)).trim().toLowerCase());
+  const exact = heads.indexOf(name);
+  if (exact >= 0) return exact;
+  const letters = /^[a-z]{1,3}$/.test(name) ? colNum(name) : -1;
+  if (letters >= 0 && letters < n) return letters;
+  const part = heads.findIndex((h) => h.includes(name));
+  if (part >= 0) return part;
+  return letters < MAX_COLS ? letters : -1;
+}
 
 function clearSelection() {
   const { r0, r1, c0, c1 } = dataRect();
@@ -1129,6 +1178,7 @@ document.addEventListener('keydown', (e) => {
   if (mod && e.shiftKey && k === 'l') { e.preventDefault(); clearFilters(); return; }
   if (mod && e.shiftKey && k === 'f') { e.preventDefault(); openColMenu(sel.ac); return; }
   if (mod && k === 'f') { e.preventDefault(); openFind(); return; }
+  if (mod && !e.shiftKey && k === 'g') { e.preventDefault(); openGoTo(); return; }
   if (isTextInput(e.target) || !colMenu.hidden) return;
 
   if (e.altKey && k === 'ArrowDown') { e.preventDefault(); openColMenu(sel.ac); return; }

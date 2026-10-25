@@ -91,6 +91,7 @@ The keys follow Excel. On Windows and Linux, use Ctrl for ⌘ and Alt for ⌥.
 | ⌘ + arrow | Jump to the edge of the data |
 | Shift + arrows, Shift + click, drag | Select a range |
 | ⌘A, Shift+Space, Ctrl+Space | Select all, the row, the column |
+| ⌘G | Go to a cell, row, column or header (see below) |
 
 **Editing**
 
@@ -139,7 +140,7 @@ Filters on several columns combine. Filtered columns and their row numbers turn 
 
 - Right-click a cell or header to insert or delete rows and columns, sort, or filter.
 - Drag the edge of a column header to resize the column. Double-click the edge to fit it to its contents.
-- Type a cell or range (`B12`, `A1:D20`) in the box at the top left to jump to it.
+- Press ⌘G, or click the box at the top left, to jump somewhere. Type a cell or range (`B12`, `A1:D20`), a row (`12`), a column (`AA`), or part of a column's header (`email`), then press Enter. A column or header keeps you on the same row. Letters like `AB` go to that column unless a header is named exactly that; other text goes to the first column, from the left, whose header contains it.
 - Select some cells to see their count, sum and average at the bottom right.
 - Big files stay fast: only the cells on screen are drawn, and tens of thousands of rows scroll smoothly.
 - Light and dark mode follow your system setting.
