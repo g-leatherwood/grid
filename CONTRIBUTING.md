@@ -33,7 +33,7 @@ The page keeps its own copy of the sheet, applies each edit right away, and send
 
 Maintainers publish a release by pushing a version tag. GitHub Actions then builds the downloads for every platform with [GoReleaser](https://goreleaser.com) and attaches them to a GitHub release.
 
-1. Change the version in the bottom line of the logo in `README.md` to the new one. `go test ./...` checks the rest of the logo still matches what grid prints, and prints the correct logo if it doesn't.
+1. Change the version in the logo's subtitle line in `README.md` (`a quick peek · vX.Y.Z / …`) to the new one. `go test ./...` checks the rest of the logo still matches what grid prints, and prints the correct logo if it doesn't.
 2. Commit, then tag and push:
 
    ```sh

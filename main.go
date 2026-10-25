@@ -44,6 +44,9 @@ func main() {
 }
 
 func run(path string, port int, open bool) error {
+	// Start the clock before the slow work so the READ line's timestamp shows
+	// how long reading the file took.
+	log := newLogger(os.Stdout, wantColor(os.Stdout))
 	doc, err := Open(path)
 	if err != nil {
 		return err
@@ -63,13 +66,32 @@ func run(path string, port int, open bool) error {
 			os.Exit(1)
 		}
 	}()
-	printBanner(os.Stdout, path, url)
+	log.banner()
+	log.step("READ", fileDesc(path, doc))
+	log.step("SERVE", url+"  · local only")
 	if open {
 		openBrowser(url)
+		log.step("OPEN", "browser launched")
 	}
+	log.step("READY", "Ctrl+C to quit")
+	fmt.Fprintln(os.Stdout)
 	waitForQuit(doc)
 	s.shutdown()
 	return nil
+}
+
+// wantColor reports whether to color the status labels: on only when stdout is
+// a real terminal, NO_COLOR is unset, and TERM isn't "dumb". This keeps ANSI
+// codes out of pipes, files and dumb terminals.
+func wantColor(f *os.File) bool {
+	if os.Getenv("NO_COLOR") != "" || os.Getenv("TERM") == "dumb" {
+		return false
+	}
+	fi, err := f.Stat()
+	if err != nil {
+		return false
+	}
+	return fi.Mode()&os.ModeCharDevice != 0
 }
 
 // waitForQuit blocks until Ctrl+C. With unsaved changes it asks for a second

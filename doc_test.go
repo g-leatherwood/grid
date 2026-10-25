@@ -324,32 +324,68 @@ func TestReorderXLSXMovesFormulasStylesAndTypes(t *testing.T) {
 }
 
 func TestBanner(t *testing.T) {
+	doc := mustOpen(t, writeFile(t, "orders.csv", "a,b,c\n1,2,3\n4,5,6\n"))
 	var buf bytes.Buffer
-	printBanner(&buf, "orders.csv", "http://127.0.0.1:1/#tok")
+	lg := newLogger(&buf, false)
+	lg.banner()
+	lg.step("READ", fileDesc("orders.csv", doc))
+	lg.step("SERVE", "http://127.0.0.1:1/#tok  · local only")
+	lg.step("READY", "Ctrl+C to quit")
 	out := buf.String()
+	// With color off (not a terminal), no ANSI escapes leak into the output.
 	if strings.Contains(out, "\x1b[") {
-		t.Fatal("banner should print in the terminal's normal text color")
+		t.Fatal("logger should emit no color when color is off")
 	}
-	for _, want := range []string{word[1], "+-----+", "orders.csv", "http://127.0.0.1:1/#tok", "Ctrl+C to quit"} {
+	for _, want := range []string{word[1], tagline, "orders.csv", "CSV", "3 rows × 3 cols", "http://127.0.0.1:1/#tok", "READY", "Ctrl+C to quit"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("banner is missing %q", want)
 		}
 	}
 }
 
+func TestLoggerColor(t *testing.T) {
+	var buf bytes.Buffer
+	newLogger(&buf, true).step("READY", "go")
+	out := buf.String()
+	if !strings.Contains(out, ansiReady) || !strings.Contains(out, ansiReset) {
+		t.Errorf("colored log should wrap the label in ANSI codes, got %q", out)
+	}
+}
+
+func TestWantColor(t *testing.T) {
+	f, err := os.CreateTemp(t.TempDir(), "out")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer f.Close()
+	if wantColor(f) {
+		t.Error("a regular file is not a terminal; color should be off")
+	}
+	t.Setenv("NO_COLOR", "1")
+	if wantColor(f) {
+		t.Error("NO_COLOR should force color off")
+	}
+}
+
+func TestCommas(t *testing.T) {
+	for in, want := range map[int]string{0: "0", 42: "42", 1000: "1,000", 2001: "2,001", 1234567: "1,234,567"} {
+		if got := commas(in); got != want {
+			t.Errorf("commas(%d) = %q, want %q", in, got, want)
+		}
+	}
+}
+
 func TestLogoMatchesMockup(t *testing.T) {
 	want := []string{
-		"+-----+-----+-----+-----+-----+-----+-----+-----+-----+",
-		"|     |     |     |     |     |     |     |     |     |",
-		"+-----+-----+-----+-----+----  _     __  -+-----+-----+",
-		"|     |     |      ____ ______(_)___/ /   |     |     |",
-		"+-----+-----+---  / __ `/ ___/ / __  /  --+-----+-----+",
-		"|     |     |    / /_/ / /  / / /_/ /     |     |     |",
-		"+-----+-----+--  \\__, /_/  /_/\\__,_/  ----+-----+-----+",
-		"|     |     |   /____/  |     |     |     |     |     |",
-		"+-----+-----+-----+-----+-----+-----+-----+-----+-----+",
-		"|     |     |     |  a quick peek   |     |     |     |",
-		"+-----+-----+-----+---- v0.1.4 -----+-----+-----+-----+",
+		" ██████╗ ██████╗ ██╗██████╗",
+		"██╔════╝ ██╔══██╗██║██╔══██╗",
+		"██║  ███╗██████╔╝██║██║  ██║",
+		"██║   ██║██╔══██╗██║██║  ██║",
+		"╚██████╔╝██║  ██║██║██████╔╝",
+		" ╚═════╝ ╚═╝  ╚═╝╚═╝╚═════╝",
+		"",
+		"a quick peek · v0.1.4 / open a CSV or Excel file in your browser",
+		"────────────────────────────────────────────────────────────────",
 	}
 	got := logoLines("v0.1.4")
 	if !reflect.DeepEqual(got, want) {
@@ -358,7 +394,7 @@ func TestLogoMatchesMockup(t *testing.T) {
 }
 
 // The README shows the logo grid prints, so they can't drift apart. The README
-// carries the latest release's version in the logo's bottom line; the release
+// carries the latest release's version in the logo's subtitle line; the release
 // workflow checks that it matches the tag being released.
 func TestReadmeLogoMatchesBanner(t *testing.T) {
 	readme, err := os.ReadFile("README.md")
@@ -372,9 +408,10 @@ func TestReadmeLogoMatchesBanner(t *testing.T) {
 		t.Fatal("README has no <pre> logo block")
 	}
 	got := strings.Split(strings.TrimRight(s[start+len("<pre>\n"):end], "\n"), "\n")
-	version := regexp.MustCompile(`v\d+\.\d+\.\d+`).FindString(got[len(got)-1])
+	sub := got[len(got)-2]
+	version := regexp.MustCompile(`v\d+\.\d+\.\d+`).FindString(sub)
 	if version == "" {
-		t.Fatalf("README logo's bottom line should show a version like v1.2.3, got %q", got[len(got)-1])
+		t.Fatalf("README logo's subtitle line should show a version like v1.2.3, got %q", sub)
 	}
 	if want := logoLines(version); !reflect.DeepEqual(got, want) {
 		t.Errorf("README logo doesn't match the banner. Put this in README.md:\n%s", strings.Join(want, "\n"))
