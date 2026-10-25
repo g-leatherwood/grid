@@ -124,6 +124,9 @@ body.dirty #savebtn:hover { filter: brightness(1.08); }
 .ch { height: 24px; border-right: 1px solid var(--head-line); }
 .rh { width: var(--rowhead-w, 48px); border-bottom: 1px solid var(--line); }
 .ch.on, .rh.on { background: var(--head-sel); color: var(--fg); font-weight: 600; }
+/* The column's data type, pinned to the left edge so it clears the centered
+   letter and the sort & filter button. */
+.ch .type { position: absolute; left: 6px; top: 50%; transform: translateY(-50%); font: 10px var(--mono); font-weight: 400; color: var(--muted); pointer-events: none; }
 .ch .sort { margin-left: 4px; font-size: 14px; font-weight: 700; color: var(--accent); }
 /* The sort & filter button on every column header. */
 .ch .dd {

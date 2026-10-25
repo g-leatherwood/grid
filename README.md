@@ -142,6 +142,7 @@ Filters on several columns combine. Filtered columns and their row numbers turn 
 - Drag the edge of a column header to resize the column. Double-click the edge to fit it to its contents.
 - Press ⌘G, or click the box at the top left, to jump somewhere. Type a cell or range (`B12`, `A1:D20`), a row (`12`), a column (`AA`), or part of a column's header (`email`), then press Enter. A column or header keeps you on the same row. Letters like `AB` go to that column unless a header is named exactly that; other text goes to the first column, from the left, whose header contains it.
 - Select some cells to see their count, sum and average at the bottom right.
+- grid works out what kind of data each column holds — text, number, currency, percent, date, yes/no, or mixed. Hover a column header, or open its sort & filter menu, to see the type and how many values fit. A type needs 80% of a column's non-blank cells; numbers, currency and percents together count as numbers. It's only a label and doesn't change your file.
 - Big files stay fast: only the cells on screen are drawn, and tens of thousands of rows scroll smoothly.
 - Light and dark mode follow your system setting.
 

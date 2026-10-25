@@ -40,6 +40,7 @@ let colW = [];
 let colX = [0];      // colX[c] = left edge of column c
 let nRows = MIN_ROWS, nCols = MIN_COLS;
 let dataCols = 1;    // columns that hold any data; only these get a sort & filter button
+let colTypes = [];   // colTypes[c] = {label, title} or null, filled in as headers are drawn
 let view = null;     // with a filter: {rows: [data rows shown], tail: data row count when filtered}
 let sel = { ar: 0, ac: 0, fr: 0, fc: 0 }; // anchor (the active cell) and focus, in view rows
 let ed = null;       // {r, c, mode: 'enter' | 'edit', via: 'cell' | 'fx'}
@@ -313,6 +314,7 @@ function colAt(x) {
 
 function growToData() {
   dataCols = maxCols();
+  colTypes = []; // the data changed, so the types might have too
   const r = Math.min(MAX_ROWS, Math.max(nRows, viewRows() + 100));
   const c = Math.min(MAX_COLS, Math.max(nCols, dataCols + 10));
   if (r !== nRows || c !== nCols) { nRows = r; nCols = c; layout(); }
@@ -358,6 +360,20 @@ function render() {
     el.style.cssText = `left:${colX[c]}px;width:${colW[c]}px`;
     el.dataset.c = c;
     el.append(colName(c));
+    // The column's data type: a small muted tag pinned to the left edge, clear
+    // of the centered letter and the menu button. Narrow columns drop the tag
+    // and keep the type on hover and in the sort & filter menu.
+    const type = c < dataCols ? colType(c) : null;
+    if (type) el.title = type.title;
+    // The centered letter (and sort arrow) must clear the tag on the left and
+    // the button on the right.
+    const mid = colName(c).length * 7 + (ss.sort && ss.sort.c === c ? 18 : 0);
+    if (type && colW[c] >= Math.max(2 * (10 + type.label.length * 6) + mid, mid + 44)) {
+      const tag = document.createElement('span');
+      tag.className = 'type';
+      tag.textContent = type.label;
+      el.append(tag);
+    }
     if (ss.sort && ss.sort.c === c) {
       const arrow = document.createElement('span');
       arrow.className = 'sort';
@@ -894,6 +910,49 @@ function isNumericColumn(c) {
   return total > 0 && nums / total >= 0.8;
 }
 
+const TYPES = {
+  text: ['abc', 'Text'], number: ['123', 'Number'], currency: ['$', 'Currency'], percent: ['%', 'Percent'],
+  date: ['date', 'Date'], bool: ['y/n', 'Yes/No'],
+};
+const BOOL_RE = /^(true|false|yes|no)$/i;
+
+function valueType(v) {
+  const t = v.trim();
+  if (BOOL_RE.test(t)) return 'bool';
+  if (NUM_RE.test(t)) return t.endsWith('%') ? 'percent' : /[$€£¥]/.test(t) ? 'currency' : 'number';
+  if (DATE_RE.test(t) && !Number.isNaN(Date.parse(t))) return 'date';
+  return 'text';
+}
+
+// colType labels a column by the kind of values in it, looking at the same
+// rows as isNumericColumn. A type needs 80% of the non-blank values; numbers,
+// currency and percents together count as numbers; anything else is mixed.
+function colType(c) {
+  if (colTypes[c] !== undefined) return colTypes[c];
+  const counts = {};
+  let total = 0, sym = '$';
+  for (let r = ss.header ? 1 : 0; r < Math.min(dataRows(sheet), 2000); r++) {
+    const v = val(sheet, r, c);
+    if (!v) continue;
+    const t = valueType(v);
+    if (t === 'currency' && !counts.currency) sym = v.match(/[$€£¥]/)[0];
+    counts[t] = (counts[t] || 0) + 1;
+    total++;
+  }
+  if (!total) return (colTypes[c] = null);
+  const [top, n] = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
+  const nums = (counts.number || 0) + (counts.currency || 0) + (counts.percent || 0);
+  const of = (k, m) => `${TYPES[k][1]}: ${m.toLocaleString()} of ${total.toLocaleString()} values`;
+  let type;
+  if (n / total >= 0.8) type = { label: top === 'currency' ? sym : TYPES[top][0], title: of(top, n) };
+  else if (nums / total >= 0.8) type = { label: TYPES.number[0], title: of('number', nums) };
+  else {
+    const mix = Object.entries(counts).sort((a, b) => b[1] - a[1]).map(([k, m]) => `${m.toLocaleString()} ${TYPES[k][1].toLowerCase()}`);
+    type = { label: 'mix', title: 'Mixed: ' + mix.join(', ') };
+  }
+  return (colTypes[c] = type);
+}
+
 function sortLabels(c) {
   return isNumericColumn(c) ? ['smallest to largest', 'largest to smallest'] : ['A → Z', 'Z → A'];
 }
@@ -1008,6 +1067,8 @@ function openColMenu(c) {
   };
   const title = el('div', 'cm-title', colName(c));
   if (ss.header && val(sheet, 0, c)) title.append(el('span', '', ' · ' + val(sheet, 0, c)));
+  const type = colType(c);
+  if (type) title.append(el('span', 'cm-type', ' · ' + type.title.split(':')[0]));
 
   const sortBox = el('div', 'cm-sort');
   const sortBtn = (label, isDesc) => {
