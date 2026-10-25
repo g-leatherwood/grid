@@ -41,7 +41,7 @@ const (
 )
 
 // logger prints the startup banner and a timestamped status line per step,
-// like "00:00.02  READY  Ctrl+C to quit". start is set when grid begins, so
+// like "1.9ms   READY  Ctrl+C to quit". start is set when grid begins, so
 // each line's timestamp shows how far into startup that step happened.
 type logger struct {
 	w     io.Writer
@@ -77,28 +77,34 @@ func (l *logger) banner() {
 	fmt.Fprintln(l.w)
 }
 
-// step prints one status line: an elapsed timestamp, a short label, and a
+// step prints one status line: the time since start, a short label, and a
 // detail. READY is bold yellow-green, every other label tan.
 func (l *logger) step(label, detail string) {
 	ts := stamp(time.Since(l.start))
 	if !l.color {
-		fmt.Fprintf(l.w, "  %-8s  %-5s  %s\n", ts, label, detail)
+		fmt.Fprintf(l.w, "  %-6s  %-5s  %s\n", ts, label, detail)
 		return
 	}
 	code := ansiStep
 	if label == "READY" {
 		code = ansiReady
 	}
-	fmt.Fprintf(l.w, "  %s%-8s%s  %s%-5s%s  %s\n", ansiDim, ts, ansiReset, code, label, ansiReset, detail)
+	fmt.Fprintf(l.w, "  %s%-6s%s  %s%-5s%s  %s\n", ansiDim, ts, ansiReset, code, label, ansiReset, detail)
 }
 
-// stamp formats a duration as mm:ss.cc, like the timestamps in the log.
+// stamp formats the time since start in whatever unit fits, with one
+// decimal: "0.4ms", "1.4s", "2m05s". Startup takes well under a millisecond,
+// so a fixed clock format would read all zeros.
 func stamp(d time.Duration) string {
-	cs := d.Milliseconds() / 10
-	if cs < 0 {
-		cs = 0
+	switch d = max(d, 0); {
+	case d < 999950*time.Microsecond: // would round up to 1000.0ms
+		return fmt.Sprintf("%.1fms", float64(d)/float64(time.Millisecond))
+	case d < 59950*time.Millisecond:
+		return fmt.Sprintf("%.1fs", d.Seconds())
+	default:
+		s := int(d.Round(time.Second).Seconds())
+		return fmt.Sprintf("%dm%02ds", s/60, s%60)
 	}
-	return fmt.Sprintf("%02d:%02d.%02d", cs/6000, (cs/100)%60, cs%100)
 }
 
 // fileDesc is the READ line's detail: the file, its format, and its size, like

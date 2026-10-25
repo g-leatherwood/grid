@@ -370,6 +370,23 @@ func TestWantColor(t *testing.T) {
 	}
 }
 
+func TestStamp(t *testing.T) {
+	for d, want := range map[time.Duration]string{
+		0:                         "0.0ms",
+		420 * time.Microsecond:    "0.4ms",
+		21 * time.Millisecond:     "21.0ms",
+		999970 * time.Microsecond: "1.0s",
+		1400 * time.Millisecond:   "1.4s",
+		59970 * time.Millisecond:  "1m00s",
+		125 * time.Second:         "2m05s",
+		-time.Second:              "0.0ms",
+	} {
+		if got := stamp(d); got != want {
+			t.Errorf("stamp(%v) = %q, want %q", d, got, want)
+		}
+	}
+}
+
 func TestCommas(t *testing.T) {
 	for in, want := range map[int]string{0: "0", 42: "42", 1000: "1,000", 2001: "2,001", 1234567: "1,234,567"} {
 		if got := commas(in); got != want {
@@ -434,11 +451,12 @@ func TestReadmeLogoMatchesBanner(t *testing.T) {
 }
 
 // logoSVG draws the banner the way a terminal shows it, one cell per
-// character on a dark panel: the word's full blocks filled and its double
-// box-drawing lines stroked in olive drab, then the subtitle and rule in grey.
+// character on a transparent background: the word's full blocks filled and its
+// double box-drawing lines stroked in olive drab, then the subtitle and rule in
+// a grey that reads on GitHub's light and dark themes.
 // textLength pins the subtitle to its cells, so any monospace font fits.
 func logoSVG(lines []string) string {
-	const cw, ch, pad, g = 9.0, 18.0, 24.0, 2.5 // cell size, padding, gap between double lines
+	const cw, ch, pad, g = 9.0, 18.0, 2.0, 2.5 // cell size, padding, gap between double lines
 	cols := 0
 	for _, line := range lines {
 		cols = max(cols, len([]rune(line)))
@@ -446,7 +464,6 @@ func logoSVG(lines []string) string {
 	w, h := float64(cols)*cw+2*pad, float64(len(lines))*ch+2*pad
 	var b strings.Builder
 	fmt.Fprintf(&b, "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"%g\" height=\"%g\" viewBox=\"0 0 %g %g\">\n", w, h, w, h)
-	fmt.Fprintf(&b, "<rect width=\"%g\" height=\"%g\" rx=\"10\" fill=\"#2d3136\"/>\n", w, h)
 	var blocks, strokes strings.Builder
 	for r, line := range lines[:len(word)] {
 		runes := []rune(line)

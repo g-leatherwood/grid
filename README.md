@@ -56,7 +56,7 @@ grid budget.xlsx       # Excel (.xlsx, .xlsm), all sheets
 grid notes.csv         # doesn't exist yet? it's created when you save
 ```
 
-grid opens the file in your default browser and keeps running in the terminal, where it prints its logo and a short startup log — the file it read, the address it's serving on, and a `READY` line — then waits. The labels are colored in a terminal and plain when the output is piped to a file.
+grid opens the file in your default browser and keeps running in the terminal, where it prints its logo and a short startup log — the file it read, the address it's serving on, and a `READY` line, each with how long after starting it happened (`0.4ms`) — then waits. The labels are colored in a terminal and plain when the output is piped to a file.
 
 - **Save:** press ⌘S (Ctrl+S on Windows and Linux). While you have unsaved changes, the button in the top right turns blue and reads "Unsaved changes · Save".
 - **Quit:** press Ctrl+C in the terminal, and the browser tab closes. If the browser won't let a page close its own tab, the tab says grid has quit instead. If you have unsaved changes, grid warns you and waits for a second Ctrl+C.
